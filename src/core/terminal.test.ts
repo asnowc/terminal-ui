@@ -1,6 +1,6 @@
 import { RenderBus, Terminal } from "./terminal.js";
 import { it, expect, describe, vi } from "vitest";
-import { asyncTime } from "./__test__/mock_view.js";
+import { MockView, asyncTime } from "./__test__/mock_view.js";
 import { MockTerminal, MockStdout } from "./__test__/mock_terminal.js";
 describe("RenderBus", function () {
     function createRender() {
@@ -101,5 +101,18 @@ describe("Terminal", function () {
         const stdout = new MockStdout() as any as typeof process.stdout;
         new Terminal(stdout);
         expect(() => new Terminal(stdout)).toThrowError();
+    });
+    it("子节点渲染", async function () {
+        const view = new MockTerminal();
+        const child1 = new MockView([0, 0, 10, 10]);
+        const child2 = new MockView([0, 0, 10, 10]);
+        view.appendChild(child1);
+        view.appendChild(child2);
+        child1.render = vi.fn();
+        child2.render = vi.fn();
+        view.mockResizeEvent(60, 20);
+        await asyncTime(1000 / 15);
+        expect(child1.render).toBeCalled();
+        expect(child2.render).toBeCalled();
     });
 });

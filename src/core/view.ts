@@ -105,7 +105,7 @@ export abstract class View extends Node {
             });
         }
     }
-    private renderChild(renderInfo: RenderInfo = {}) {
+    protected renderChild(renderInfo: RenderInfo = {}) {
         for (const node of this) {
             //todo 渲染信息处理
             node.render(false, renderInfo);

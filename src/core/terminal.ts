@@ -3,7 +3,7 @@ import { WriteStream } from "node:tty";
 
 export class Terminal extends View {
     private static instanceList = new WeakSet();
-    protected root: undefined;
+    protected root = this;
     protected get viewArea(): Area {
         let size = this.stdout.getWindowSize();
         return [0, 0, size[0], size[1]];
@@ -27,6 +27,7 @@ export class Terminal extends View {
             this.stdout.write(line);
             y++;
         }
+        if (!ignoreChild && this.childCount > 0) this.renderChild(renderInfo);
     }
     #onResize = () => {
         this.asyncRender();

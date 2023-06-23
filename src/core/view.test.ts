@@ -106,4 +106,17 @@ describe("AreaRender", function () {
         await view.afterRender();
         expect(view.render).toBeCalledTimes(1);
     });
+    it("子节点渲染", function () {
+        const view = new MockView([0, 0, 10, 10]);
+        const child1 = new MockView([0, 0, 10, 10]);
+        const child2 = new MockView([0, 0, 10, 10]);
+        view.appendChild(child1);
+        view.appendChild(child2);
+        child1.render = vi.fn();
+        child2.render = vi.fn();
+
+        view.render();
+        expect(child1.render).toBeCalled();
+        expect(child2.render).toBeCalled();
+    });
 });
