@@ -7,7 +7,7 @@ export class Terminal extends View {
         let size = this.stdout.getWindowSize();
         return [0, 0, size[0], size[1]];
     }
-    constructor(readonly stdout = process.stderr, private stdin = process.stdin, readonly renderBus?: RenderBus) {
+    constructor(readonly stdout = process.stderr, readonly renderBus?: RenderBus) {
         if (Terminal.instanceList.has(stdout))
             throw new Error("stdout has been instantiated by another Terminal instance");
         super();
@@ -60,6 +60,26 @@ export class Terminal extends View {
     resetCursor() {
         this.stdout.write("\x1B[u");
     }
+    clearArea(area?: Area) {
+        if (!area) this.stdout.write("\x1B[2J");
+        else super.clearArea(area);
+    }
+    clearScreenDown() {
+        this.stdout.clearScreenDown();
+    }
+    clearLine() {
+        this.stdout.write("\x1b[K");
+    }
+    cursorTo(x: number, y?: number) {
+        this.stdout.cursorTo(x, y);
+    }
+
+    static createDefault(time = 1000 / 30) {
+        let terminal = new this(undefined, new RenderBus(time));
+        terminal.showCursor(false);
+        terminal.clearArea();
+        return terminal;
+    }
 }
 
 type Callback = () => void;
@@ -106,9 +126,7 @@ export class RenderBus {
         }
     }
 }
-export function createDefaultTerminal(time = 1000 / 30) {
-    return new Terminal(undefined, undefined, new RenderBus(time));
-}
+
 /** 光标控制码
 \x1b[nA                 光标上移n行
 \x1b[nB                 光标下移n行

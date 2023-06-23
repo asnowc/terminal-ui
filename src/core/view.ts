@@ -120,10 +120,9 @@ export abstract class View extends Node {
             stdout.cursorTo(x, y);
             stdout.write(" ".repeat(width));
         }
-        this.overEllipsis;
     }
     setContext(str: string, notRendering?: boolean) {
-        let res = createBlockStr(str, this.width, this.autoWarp, this.overEllipsis);
+        let res = createBlockStr(str, this.width, this.autoWarp);
         if (notRendering) {
             this.context = res;
             return;
