@@ -69,28 +69,40 @@ const keyCodingWithCtrl: Record<string, CtrlKey> = {
 Object.freeze(keyCoding);
 Object.freeze(keyCoding.ctrlKeys);
 
+export interface KeyboardCtrl {
+    on(event: "keyboard", listener: (str: string, code?: number, auxiliaryKey?: "ctrl" | "alt") => any): this;
+    on(event: string, listener: (this: this, ...args: any[]) => any): this;
+}
+
 /**
  * @event keyboard
  */
 export class KeyboardCtrl extends EventEmitter {
-    constructor(protected stdin: ReadStream) {
+    private static instanceList = new WeakSet<ReadStream>();
+    constructor(protected stdin: ReadStream = process.stdin) {
+        if (KeyboardCtrl.instanceList.has(stdin))
+            throw new Error("stdin has been instantiated by another Terminal instance");
+        else KeyboardCtrl.instanceList.add(stdin);
         super();
+        this.watch = true;
     }
-    #watch = false;
+    #watch?: (data: Buffer) => void;
     set watch(val: boolean) {
-        if (val === this.#watch) return;
-        this.#watch = val;
+        val = Boolean(val);
+        if (val === this.watch) return;
 
         if (val) {
+            this.#watch = this.onInput.bind(this);
             this.stdin.setRawMode(true);
-            this.stdin.on("data", this.onInput);
+            this.stdin.on("data", this.#watch);
         } else {
-            this.stdin.off("data", this.onInput);
+            this.stdin.off("data", this.#watch!);
+            this.#watch = undefined;
             this.stdin.pause();
         }
     }
     get watch() {
-        return this.#watch;
+        return this.#watch !== undefined;
     }
 
     /**
@@ -155,23 +167,22 @@ export class KeyboardCtrl extends EventEmitter {
         return [str, code, auxiliaryKey];
     }
     protected readonly listens: Set<number> = new Set();
-    protected onInput = (data: Buffer) => {
+    protected onInput(data: Buffer) {
         let codeInfo = this.paseBuffer(data);
         if (codeInfo[1] !== undefined) this.emit("keyboard", ...codeInfo);
-    };
+    }
+}
+
+export interface InputCtrl {
+    on(event: "change", listener: () => void): any;
+    on(event: "keyboard", listener: (str: string, code?: number, auxiliaryKey?: "ctrl" | "alt") => any): this;
+    on(event: string, listener: (this: this, ...args: any[]) => any): this;
 }
 
 /**
  * @event change
  */
 export class InputCtrl extends KeyboardCtrl {
-    /** @overload */
-    protected onInput = (data: Buffer) => {
-        let codeInfo = this.paseBuffer(data);
-        if (codeInfo[1] !== undefined) this.emit("keyboard", ...codeInfo);
-        this.paseInputStr(...codeInfo);
-        this.emit("change");
-    };
     get str() {
         return this.#str;
     }
@@ -216,5 +227,11 @@ export class InputCtrl extends KeyboardCtrl {
             else this.#str = this.#str.slice(0, this.#cursor) + str + this.#str.slice(this.#cursor);
             this.#cursor += str.length;
         }
+    } /** @overload */
+    protected onInput(data: Buffer) {
+        let codeInfo = this.paseBuffer(data);
+        if (codeInfo[1] !== undefined) this.emit("keyboard", ...codeInfo);
+        this.paseInputStr(...codeInfo);
+        this.emit("change");
     }
 }

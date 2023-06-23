@@ -2,18 +2,26 @@ import type { Terminal } from "./terminal.js";
 import { Area, View } from "./view.js";
 
 type PositionSize = number | [number, number] | Area;
-export interface AreaBlockOption {
-    /** default: [0, 0] */
-    position?: [x: number, y: number];
-    /** default: [4, 1] */
-    areaSize?: [width: number, height: number];
-}
+
 export class AreaBlock extends View {
     protected viewArea: Area;
-    constructor(readonly root: Terminal, option: AreaBlockOption = {}) {
+    constructor(root: Terminal, area: [width: number, height: number]);
+    constructor(root: Terminal, area: [x: number, y: number, width: number, height: number]);
+    constructor(root: Terminal, area: [number, number] | Area);
+    constructor(readonly root: Terminal, area: [number, number] | Area) {
         super();
-        const { position = [0, 0], areaSize = [4, 1] } = option;
-        this.viewArea = [...position, position[0] + areaSize[0], position[1] + areaSize[1]];
+        let [x, y, width, height] = area;
+        if (area.length < 4) {
+            width = x;
+            height = y;
+            x = 0;
+            y = 0;
+        }
+
+        if (!(x >= 0 && y >= 0)) throw new Error("area[0] and area[1] must be greater than or equal to 0");
+        if (!(width! > 0 && height! > 0)) throw new Error("area[2] and area[3] must be greater than 0");
+
+        this.viewArea = [x, y, x + width!, y + height!];
     }
 
     setBlockSize(width: number, height: number) {

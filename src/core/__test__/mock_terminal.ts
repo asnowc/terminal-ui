@@ -1,5 +1,6 @@
-import { Writable, Readable } from "node:stream";
+import { Writable } from "node:stream";
 import { Terminal, RenderBus } from "../terminal.js";
+
 export class MockStdout extends Writable {
     constructor(windowSize = [100, 100]) {
         super();

@@ -1,4 +1,5 @@
 import { Area, RenderInfo, View } from "./view.js";
+import { WriteStream } from "node:tty";
 
 export class Terminal extends View {
     private static instanceList = new WeakSet();
@@ -7,14 +8,15 @@ export class Terminal extends View {
         let size = this.stdout.getWindowSize();
         return [0, 0, size[0], size[1]];
     }
-    constructor(readonly stdout = process.stderr, readonly renderBus?: RenderBus) {
+    constructor(readonly stdout: WriteStream = process.stderr, readonly renderBus?: RenderBus) {
         if (Terminal.instanceList.has(stdout))
             throw new Error("stdout has been instantiated by another Terminal instance");
+        Terminal.instanceList.add(stdout);
         super();
-        stdout.on("resize", this.onResize);
+        stdout.on("resize", this.#onResize);
     }
     destructor() {
-        this.stdout.off("resize", this.onResize);
+        this.stdout.off("resize", this.#onResize);
     }
     render(ignoreChild?: boolean | undefined, renderInfo?: RenderInfo): void {
         this.stdout.cursorTo(0, 0);
@@ -26,7 +28,7 @@ export class Terminal extends View {
             y++;
         }
     }
-    private onResize = () => {
+    #onResize = () => {
         this.asyncRender();
     };
     get width() {
@@ -73,7 +75,10 @@ export class Terminal extends View {
     cursorTo(x: number, y?: number) {
         this.stdout.cursorTo(x, y);
     }
-
+    /**
+     * @description 使用process.stderr创建terminal, 设置默认RenderBus、清除终端内容、隐藏光标
+     * @param time 异步渲染最短时间间隔, 默认1000/30毫秒 即每秒30帧
+     */
     static createDefault(time = 1000 / 30) {
         let terminal = new this(undefined, new RenderBus(time));
         terminal.showCursor(false);
@@ -84,7 +89,12 @@ export class Terminal extends View {
 
 type Callback = () => void;
 type CallList = Set<Callback>;
+
+/** UI渲染优化机制, 避免频繁渲染 */
 export class RenderBus {
+    /**
+     * @param time 最短渲染时间间隔, 单位毫秒
+     */
     constructor(public time: number) {}
     #id?: NodeJS.Timer;
     private renderList: CallList = new Set();
@@ -121,7 +131,7 @@ export class RenderBus {
                 callBack();
             } catch (error) {
                 console.error(error);
-                //todo
+                //todo 异常处理
             }
         }
     }

@@ -14,13 +14,13 @@ abstract class Node {
     getChildAt(index: number): Node | undefined {
         return this.#children[index];
     }
-    appendChildren(child: Node) {
+    appendChild(child: Node) {
         if (child.parent) throw new Error("The parent node already exists");
         (child as any).parent = this;
 
         this.#children.push(child);
     }
-    removeChildren(child: Node) {
+    removeChild(child: Node) {
         let newList = [];
         for (const area of this.#children) {
             if (area !== child) newList.push(area);
@@ -42,7 +42,7 @@ export interface StringLine {
 
 export abstract class View extends Node {
     protected abstract root?: Terminal;
-    protected context: StringLine[] = [];
+    private context: StringLine[] = [];
     readonly style = new Style();
     protected *getRenderLine() {
         let y = 0;
@@ -105,9 +105,9 @@ export abstract class View extends Node {
             });
         }
     }
-    protected renderChild(renderInfo: RenderInfo = {}) {
+    private renderChild(renderInfo: RenderInfo = {}) {
         for (const node of this) {
-            //todo
+            //todo 渲染信息处理
             node.render(false, renderInfo);
         }
     }
@@ -190,8 +190,8 @@ export interface View {
     get children(): View[];
 
     readonly parent?: View | undefined;
-    appendChildren: (child: View) => void;
-    removeChildren: (child: View) => void;
+    appendChild: (child: View) => void;
+    removeChild: (child: View) => void;
     getChildAt: (index: number) => View | undefined;
     [Symbol.iterator]: () => Generator<View, void, undefined>;
 }

@@ -1,4 +1,4 @@
-import { AreaBlock, AreaBlockOption } from "../area_block.js";
+import { AreaBlock } from "../area_block.js";
 import { Area, StringLine, View } from "../view.js";
 import { MockStdout, MockTerminal } from "./mock_terminal.js";
 export function asyncTime(time?: number) {
@@ -21,7 +21,6 @@ export class MockView extends View {
     get mockStdout(): MockStdout {
         return this.root.stdout as any;
     }
-    public context: StringLine[] = [];
 
     getString(y: number, x = 0, len?: number) {
         let arr = this.mockStdout.context[y];
@@ -37,8 +36,8 @@ export class MockView extends View {
     }
 }
 export class MockAreaBlock extends AreaBlock {
-    constructor(option?: AreaBlockOption) {
-        super(new MockTerminal(), option);
+    constructor(areaSize: [number, number] | Area) {
+        super(new MockTerminal(), areaSize);
     }
     getString(y: number, x = 0, len?: number) {
         let arr = this.mockStdout.context[y];

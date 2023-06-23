@@ -2,7 +2,7 @@ import { expect, it, describe } from "vitest";
 import { MockAreaBlock } from "./__test__/mock_view.js";
 describe("AreaBlock", function () {
     function createArea() {
-        const areaBlock = new MockAreaBlock({ position: [10, 10], areaSize: [20, 20] });
+        const areaBlock = new MockAreaBlock([10, 10, 20, 20]);
         areaBlock.setContext("a的bc", true);
         areaBlock.render();
         return areaBlock;

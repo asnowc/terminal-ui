@@ -1,7 +1,7 @@
-import { RenderBus } from "./terminal.js";
+import { RenderBus, Terminal } from "./terminal.js";
 import { it, expect, describe, vi } from "vitest";
 import { asyncTime } from "./__test__/mock_view.js";
-import { MockTerminal } from "./__test__/mock_terminal.js";
+import { MockTerminal, MockStdout } from "./__test__/mock_terminal.js";
 describe("RenderBus", function () {
     function createRender() {
         return new RenderBus(1000 / 30);
@@ -96,5 +96,10 @@ describe("Terminal", function () {
         terminal.asyncRender = vi.fn();
         terminal.mockResizeEvent(50, 50);
         expect(terminal.asyncRender).toBeCalled();
+    });
+    it("同一个stdout只能声明一次", function () {
+        const stdout = new MockStdout() as any as typeof process.stdout;
+        new Terminal(stdout);
+        expect(() => new Terminal(stdout)).toThrowError();
     });
 });
