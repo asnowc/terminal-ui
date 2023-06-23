@@ -1,0 +1,30 @@
+{
+    "name": "@asnc/terminal-ui",
+    "version": "0.0.1",
+    "description": "",
+    "type": "module",
+    "main": "./index.js",
+    "scripts": {
+        "test": "pnpm vitest",
+        "build": "tsc -p tsconfig.build.json"
+    },
+    "keywords": [],
+    "author": "Asnow",
+    "license": "ISC",
+    "dependencies": {
+        "@types/node": "^20.3.0",
+        "tslib": "^2.5.3"
+    },
+    "devDependencies": {
+        "vitest": "^0.32.0"
+    },
+    "imports": {
+        "#root/*": "./src/*.js"
+    },
+    "exports": {
+        "./*": "./out/*.js"
+    },
+    "files": [
+        "./out"
+    ]
+}
