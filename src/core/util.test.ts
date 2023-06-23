@@ -66,6 +66,15 @@ describe("createBlockStr", function () {
                 { str: "q", len: 1 },
             ]);
         });
+
+        it("换行符换行2", function () {
+            let str = "0:0:0\n1";
+            let res = createBlockStr(str, 20, true);
+            expect(res).toEqual([
+                { str: "0:0:0", len: 5 },
+                { str: "1", len: 1 },
+            ]);
+        });
     });
 });
 describe("toEllipsis", function () {

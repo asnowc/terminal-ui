@@ -17,12 +17,11 @@ function getStrLen(str: string) {
     return len;
 }
 
-export function createBlockStr(str: string, width: number, autoWarp?: boolean, overEllipsis?: boolean): StringLine[] {
+export function createBlockStr(str: string, width: number, autoWarp?: boolean): StringLine[] {
     let lines: StringLine[] = [];
     if (str === "") return lines;
-    else if (str.length * 2 < width) {
-        return [{ str, len: getStrLen(str) }];
-    }
+    else if (str.length === 1) return [{ str, len: getStrLen(str) }];
+
     let maxX = width;
     let i = 0; //当前索引
     let lineStartIndex = 0; //当前行起始索引

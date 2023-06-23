@@ -86,6 +86,7 @@ export class KeyboardCtrl extends EventEmitter {
             this.stdin.on("data", this.onInput);
         } else {
             this.stdin.off("data", this.onInput);
+            this.stdin.pause();
         }
     }
     get watch() {
