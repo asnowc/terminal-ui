@@ -3,7 +3,9 @@ import { Area, View } from "./view.js";
 
 type PositionSize = number | [number, number] | Area;
 export interface AreaBlockOption {
+    /** default: [0, 0] */
     position?: [x: number, y: number];
+    /** default: [4, 1] */
     areaSize?: [width: number, height: number];
 }
 export class AreaBlock extends View {

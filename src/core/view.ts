@@ -1,5 +1,6 @@
 import type { Terminal } from "./terminal.js";
 import { toEllipsis, createBlockStr } from "./util.js";
+import { Style } from "./ansi_styles.js";
 
 abstract class Node {
     #children: Node[] = [];
@@ -42,7 +43,7 @@ export interface StringLine {
 export abstract class View extends Node {
     protected abstract root?: Terminal;
     protected context: StringLine[] = [];
-
+    readonly style = new Style();
     protected *getRenderLine() {
         let y = 0;
         let maxY = this.viewArea[3] - this.y;
@@ -79,6 +80,9 @@ export abstract class View extends Node {
 
         let [x, y] = this.viewArea;
         const encoding = "utf-8";
+        const styleCode = this.style.createCode();
+        let useStyle = styleCode[0].length;
+        if (useStyle) stdout.write(styleCode[0]);
 
         for (const str of this.getRenderLine()) {
             stdout.cursorTo(x, y);
@@ -86,7 +90,7 @@ export abstract class View extends Node {
 
             y++;
         }
-
+        if (useStyle) stdout.write(styleCode[1]);
         if (!ignoreChild && this.childCount > 0) this.renderChild(renderInfo);
     }
     #asyncRendering = false;

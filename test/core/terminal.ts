@@ -1,4 +1,4 @@
-import { Terminal } from "./terminal.js";
+import { Terminal } from "../../src/core/terminal.js";
 function createTimeout(timeout: number) {
     return new Promise(function (resolve) {
         setTimeout(resolve, timeout);

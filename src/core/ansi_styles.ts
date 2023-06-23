@@ -1,5 +1,3 @@
-type StyleProp = [string, string];
-
 /** 
  
 \x1b[0m                 关闭所有属性
@@ -18,16 +16,16 @@ type StyleProp = [string, string];
 
  */
 
-const baseKey = new Map<string, { open: string; close: string }>([
-    ["bold", { open: "\x1B[1m", close: "\x1B[22m" }],
-    ["dim", { open: "\x1B[2m", close: "\x1B[22m" }],
-    ["italic", { open: "\x1B[3m", close: "\x1B[23m" }],
-    ["underline", { open: "\x1B[4m", close: "\x1B[24m" }],
-    ["twinkling", { open: "\x1b[5m", close: "\x1B[25m]" }],
-    ["inverse", { open: "\x1B[7m", close: "\x1B[27m" }],
-    ["hidden", { open: "\x1B[8m", close: "\x1B[28m" }],
-    ["strikethrough", { open: "\x1B[9m", close: "\x1B[29m" }],
-    ["overline", { open: "\x1B[53m", close: "\x1B[55m" }],
+const baseKey = new Map<string, { open: number; close: number }>([
+    ["bold", { open: 1, close: 22 }],
+    ["dim", { open: 2, close: 22 }],
+    ["italic", { open: 3, close: 23 }],
+    ["underline", { open: 4, close: 24 }],
+    ["twinkling", { open: 5, close: 25 }],
+    ["inverse", { open: 7, close: 27 }],
+    ["hidden", { open: 8, close: 28 }],
+    ["strikethrough", { open: 9, close: 29 }],
+    ["overline", { open: 53, close: 55 }],
 ]);
 export interface FontStyleOption {
     color?: FontColor;
@@ -52,24 +50,35 @@ export interface FontStyleOption {
     /** Make text overline. Supported on VTE-based terminals, the GNOME terminal, mintty, and Git Bash. */
     overline?: boolean;
 }
-export interface FontStyle extends FontStyleOption {}
-export class FontStyle {
-    static restCode = "\x1B[0m";
+export interface Style extends FontStyleOption {}
+export class Style {
+    static restCode = 0;
     static createCode(style: FontStyleOption): [string, string] {
         let open = "";
         let close = "";
-        for (const [key, val] of Object.entries(style)) {
-            let tpVal = baseKey.get(key);
-            if (tpVal) {
-                if (val) {
-                    open += tpVal.open;
-                    close = tpVal.close + close;
-                }
-            } else {
-                open += val.open;
-                close = val.close + close;
+
+        for (const [key, code] of baseKey) {
+            let val = (style as any)[key];
+            if (val === undefined) continue;
+            else if (val) {
+                open += code.open + ";";
+                close += code.close + ";";
             }
         }
+        let color: Color | undefined = style.bgColor;
+        if (color) {
+            open += color.open + ";";
+            close += color.close + ";";
+        }
+        color = style.color;
+        if (color) {
+            open += color.open + ";";
+            close += color.close + ";";
+        }
+        if (open.length === 0) return ["", ""];
+        open = "\x1B[" + open.slice(0, -1) + "m";
+        close = "\x1B[" + close.slice(0, -1) + "m";
+
         return [open, close];
     }
     static new(style: FontStyleOption = {}) {
@@ -82,12 +91,12 @@ export class FontStyle {
         }
         return obj;
     }
-    createCode(): StyleProp {
-        return FontStyle.createCode(this);
+    createCode(): [string, string] {
+        return Style.createCode(this);
     }
     createStr(str: string, reset?: boolean) {
         const [open, close] = this.createCode();
-        if (reset) return open + str + FontStyle.restCode;
+        if (reset) return open + str + Style.restCode;
 
         return open + str + close;
     }
@@ -109,8 +118,8 @@ abstract class Color {
     static ansi256 = wrapAnsi256();
     static ansi16m = wrapAnsi16m();
 
-    protected constructor(readonly open: string) {}
-    abstract readonly close: string;
+    protected constructor(readonly open: number) {}
+    abstract readonly close: number;
 
     /**
      * @description Convert from the RGB color space to the ANSI 256 color space.
@@ -118,7 +127,7 @@ abstract class Color {
      * @param green - (`0...255`)
      * @param blue - (`0...255`)
      */
-    static rgbToAnsi256(red: number, green: number, blue: number) {
+    protected static rgbToAnsi256(red: number, green: number, blue: number) {
         // We use the extended greyscale palette here, with the exception of
         // black and white. normal palette only has 4 greyscale shades.
         if (red === green && green === blue) {
@@ -136,7 +145,7 @@ abstract class Color {
         return 16 + 36 * Math.round((red / 255) * 5) + 6 * Math.round((green / 255) * 5) + Math.round((blue / 255) * 5);
     }
     /** Convert from the RGB HEX color space to the RGB color space. */
-    static hexToRgb(hex: string): [red: number, green: number, blue: number] {
+    protected static hexToRgb(hex: string): [red: number, green: number, blue: number] {
         const matches = /[a-f\d]{6}|[a-f\d]{3}/i.exec(hex);
         if (!matches) {
             return [0, 0, 0];
@@ -159,13 +168,13 @@ abstract class Color {
         ];
     }
     /** Convert from the RGB HEX color space to the ANSI 256 color space. */
-    static hexToAnsi256(hex: string): number {
+    protected static hexToAnsi256(hex: string): number {
         return this.rgbToAnsi256(...this.hexToRgb(hex));
     }
     /** Convert from the ANSI 256 color space to the ANSI 16 color space.
   		@param code - A number representing the ANSI 256 color.
 	*/
-    static ansi256ToAnsi(code: number) {
+    protected static ansi256ToAnsi(code: number) {
         if (code < 8) {
             return 30 + code;
         }
@@ -208,57 +217,57 @@ abstract class Color {
         return result;
     }
     /** Convert from the RGB color space to the ANSI 16 color space. */
-    static rgbToAnsi(red: number, green: number, blue: number): number {
+    protected static rgbToAnsi(red: number, green: number, blue: number): number {
         return this.ansi256ToAnsi(this.rgbToAnsi256(red, green, blue));
     }
     /** Convert from the RGB HEX color space to the ANSI 16 color space. */
-    static hexToAnsi(hex: string): number {
+    protected static hexToAnsi(hex: string): number {
         return this.ansi256ToAnsi(this.hexToAnsi256(hex));
     }
 }
 
 export class FontColor extends Color {
-    readonly close = "\x1B[39m";
+    readonly close = 39;
 
-    static black = new this("\x1B[30m");
-    static red = new this("\x1B[31m");
-    static green = new this("\x1B[32m");
-    static yellow = new this("\x1B[33m");
-    static blue = new this("\x1B[34m");
-    static magenta = new this("\x1B[35m");
-    static cyan = new this("\x1B[36m");
-    static white = new this("\x1B[37m");
-    static blackBright = new this("\x1B[90m");
-    static redBright = new this("\x1B[91m");
-    static greenBright = new this("\x1B[92m");
-    static yellowBright = new this("\x1B[93m");
-    static blueBright = new this("\x1B[94m");
-    static magentaBright = new this("\x1B[95m");
-    static cyanBright = new this("\x1B[96m");
-    static whiteBright = new this("\x1B[97m");
+    static black = new this(30);
+    static red = new this(31);
+    static green = new this(32);
+    static yellow = new this(33);
+    static blue = new this(34);
+    static magenta = new this(35);
+    static cyan = new this(36);
+    static white = new this(37);
+    static blackBright = new this(90);
+    static redBright = new this(91);
+    static greenBright = new this(92);
+    static yellowBright = new this(93);
+    static blueBright = new this(94);
+    static magentaBright = new this(95);
+    static cyanBright = new this(96);
+    static whiteBright = new this(97);
 }
 export class BgColor extends Color {
-    readonly close = "\x1B[49m";
+    readonly close = 49;
     static ansi = wrapAnsi16(ANSI_BACKGROUND_OFFSET);
     static ansi256 = wrapAnsi256(ANSI_BACKGROUND_OFFSET);
     static ansi16m = wrapAnsi16m(ANSI_BACKGROUND_OFFSET);
 
-    static bgBlack = new this("\x1B[40m");
-    static bgRed = new this("\x1B[41m");
-    static bgGreen = new this("\x1B[42m");
-    static bgYellow = new this("\x1B[43m");
-    static bgBlue = new this("\x1B[44m");
-    static bgMagenta = new this("\x1B[45m");
-    static bgCyan = new this("\x1B[46m");
-    static bgWhite = new this("\x1B[47m");
-    static bgBlackBright = new this("\x1B[100m");
-    static bgRedBright = new this("\x1B[101m");
-    static bgGreenBright = new this("\x1B[102m");
-    static bgYellowBright = new this("\x1B[103m");
-    static bgBlueBright = new this("\x1B[104m");
-    static bgMagentaBright = new this("\x1B[105m");
-    static bgCyanBright = new this("\x1B[106m");
-    static bgWhiteBright = new this("\x1B[107m");
+    static black = new this(40);
+    static red = new this(41);
+    static green = new this(42);
+    static yellow = new this(43);
+    static blue = new this(44);
+    static magenta = new this(45);
+    static cyan = new this(46);
+    static white = new this(47);
+    static blackBright = new this(100);
+    static redBright = new this(101);
+    static greenBright = new this(102);
+    static yellowBright = new this(103);
+    static blueBright = new this(104);
+    static magentaBright = new this(105);
+    static cyanBright = new this(106);
+    static whiteBright = new this(107);
 }
 
 function wrapAnsi16(offset = 0) {

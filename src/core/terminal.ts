@@ -106,7 +106,9 @@ export class RenderBus {
         }
     }
 }
-
+export function createDefaultTerminal(time = 1000 / 30) {
+    return new Terminal(undefined, undefined, new RenderBus(time));
+}
 /** 光标控制码
 \x1b[nA                 光标上移n行
 \x1b[nB                 光标下移n行

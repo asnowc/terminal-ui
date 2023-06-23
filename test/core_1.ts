@@ -1,10 +1,11 @@
-import { Area, BoxArea, RenderBus } from "@asnc/terminal-ui/area_render.js";
+import { AreaBlock, AreaBlockOption, createDefaultTerminal } from "../src/core.js";
 import { InputCtrl } from "@asnc/terminal-ui/input_handle.js";
-
+const terminal = createDefaultTerminal();
 const stdout = process.stdout;
-function createArea(area?: BoxArea) {
-    return new Area(stdout, area);
+function createArea(area?: AreaBlockOption) {
+    return new AreaBlock(terminal, area);
 }
+
 const showArea = createArea([0, 0, 40, 5]); //内容展示
 const timerArea = createArea([42, 0, 20, 5]); //计时器
 const inputArea = createArea([0, 6, 40, 5]); //输入框
@@ -16,14 +17,14 @@ inputCtrl.on("keyboard", function (this: InputCtrl, char, code, aux) {
     if (code === 13) this.emit("input");
 });
 inputCtrl.on("change", function (this: InputCtrl) {
-    inputArea.render(this.str);
+    inputArea.setContext(this.str);
     let str = `${++n1}:${this.cursor}:${this.str.length}`;
-    timerArea.render(str);
+    timerArea.setContext(str);
 });
 inputCtrl.on("input", function (this: InputCtrl) {
-    showArea.render(this.str);
+    showArea.setContext(this.str);
     this.str = "";
-    inputArea.render("");
+    inputArea.setContext("");
 });
 
-timerArea.render("n1: " + n1++);
+timerArea.setContext("n1: " + n1++);
