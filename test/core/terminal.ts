@@ -1,10 +1,10 @@
-import { Terminal } from "../../src/core/terminal.js";
+import { Terminal } from "@asnc/terminal-ui/core.js";
 function createTimeout(timeout: number) {
     return new Promise(function (resolve) {
         setTimeout(resolve, timeout);
     });
 }
-const shellCtrl = new Terminal();
+const shellCtrl = Terminal.createDefault()
 const stdout = process.stdout;
 const move = async () => {
     stdout.write("abc");

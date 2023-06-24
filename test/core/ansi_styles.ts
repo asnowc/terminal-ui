@@ -1,4 +1,4 @@
-import { BgColor, FontColor, Style } from "../../src/core/ansi_styles.js";
+import { BgColor, FontColor, Style } from "@asnc/terminal-ui/core.js";
 
 const stdout = process.stdout;
 
