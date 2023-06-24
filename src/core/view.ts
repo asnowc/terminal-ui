@@ -45,9 +45,18 @@ export abstract class View extends Node {
     private context: StringLine[] = [];
     readonly style = new Style();
     protected *getRenderLine() {
+        let windowMaxX = this.root?.width ?? Infinity;
+        let windowMaxY = this.root?.height ?? Infinity;
         let y = 0;
-        let maxY = this.viewArea[3] - this.y;
+        let maxY: number;
+        if (this.viewArea[3] > windowMaxY) maxY = windowMaxY - this.y;
+        else maxY = this.viewArea[3] - this.y;
+
         let width = this.width;
+        if (this.viewArea[2] > windowMaxX) {
+            //todo: 超过窗口范围
+        }
+
         const content = this.context;
         if (this.#autoWarp) {
             let max = maxY < content.length ? maxY - 1 : content.length - 1;
@@ -122,7 +131,7 @@ export abstract class View extends Node {
         }
     }
     setContext(str: string, notRendering?: boolean) {
-        let res = createBlockStr(str, this.width, this.autoWarp);
+        let res = createBlockStr(str, this.width);
         if (notRendering) {
             this.context = res;
             return;

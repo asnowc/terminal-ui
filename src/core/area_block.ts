@@ -18,7 +18,8 @@ export class AreaBlock extends View {
             y = 0;
         }
 
-        if (!(x >= 0 && y >= 0)) throw new Error("area[0] and area[1] must be greater than or equal to 0");
+        if (typeof x !== "number" || typeof y !== "number")
+            throw new Error("area[0] and area[1] must be a number");
         if (!(width! > 0 && height! > 0)) throw new Error("area[2] and area[3] must be greater than 0");
 
         this.viewArea = [x, y, x + width!, y + height!];

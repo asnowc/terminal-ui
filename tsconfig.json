@@ -16,5 +16,5 @@
         "noEmit": true
     },
     "exclude": ["node_modules"],
-    "include": ["src", "test"]
+    "include": ["src", "test", "pref_test/perf"]
 }

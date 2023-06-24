@@ -2,40 +2,20 @@ import { createBlockStr, toEllipsis } from "./util.js";
 import { it, describe, expect } from "vitest";
 
 describe("createBlockStr", function () {
-    describe("不换行、不省略", function () {
+    describe("单行", function () {
         it("空字符串,命中优化策略", function () {
             expect(createBlockStr("", 10)).toEqual([]);
         });
-        it("不超过宽度,命中优化策略", function () {
+        it("不超过宽度", function () {
             let str = "12中文";
             let res = createBlockStr(str, 10);
             expect(res, "应该").toEqual([{ str, len: 6 }]);
         });
-        it("不超过宽度,不命中优化策略", function () {
-            let str = "abcdef";
-            let res = createBlockStr(str, 10);
-            expect(res, "应该").toEqual([{ str, len: 6 }]);
-        });
-        it("英文超过", function () {
-            let str = "中文中文中a";
-            let res = createBlockStr(str, 10);
-            expect(res).toEqual([{ str: "中文中文中", len: 10 }]);
-        });
-        it("中文超1个单位", function () {
-            let str = "中文中文a中";
-            let res = createBlockStr(str, 10);
-            expect(res).toEqual([{ str: "中文中文a", len: 9 }]);
-        });
-        it("中文超2个单位", function () {
-            let str = "中文中文中文";
-            let res = createBlockStr(str, 10);
-            expect(res).toEqual([{ str: "中文中文中", len: 10 }]);
-        });
     });
-    describe("换行测试", function () {
+    describe("多行", function () {
         it("英文超过", function () {
             let str = "中文中文中a";
-            let res = createBlockStr(str, 10, true);
+            let res = createBlockStr(str, 10);
             expect(res).toEqual([
                 { str: "中文中文中", len: 10 },
                 { str: "a", len: 1 },
@@ -43,7 +23,7 @@ describe("createBlockStr", function () {
         });
         it("中文超1个单位", function () {
             let str = "中文中文a中";
-            let res = createBlockStr(str, 10, true);
+            let res = createBlockStr(str, 10);
             expect(res).toEqual([
                 { str: "中文中文a", len: 9 },
                 { str: "中", len: 2 },
@@ -51,7 +31,7 @@ describe("createBlockStr", function () {
         });
         it("中文超2个单位", function () {
             let str = "中文中文中文";
-            let res = createBlockStr(str, 10, true);
+            let res = createBlockStr(str, 10);
             expect(res).toEqual([
                 { str: "中文中文中", len: 10 },
                 { str: "文", len: 2 },
@@ -59,7 +39,7 @@ describe("createBlockStr", function () {
         });
         it("换行符换行", function () {
             let str = "abc\ndef\nq";
-            let res = createBlockStr(str, 10, true);
+            let res = createBlockStr(str, 10);
             expect(res).toEqual([
                 { str: "abc", len: 3 },
                 { str: "def", len: 3 },
@@ -69,7 +49,7 @@ describe("createBlockStr", function () {
 
         it("换行符换行2", function () {
             let str = "0:0:0\n1";
-            let res = createBlockStr(str, 20, true);
+            let res = createBlockStr(str, 20);
             expect(res).toEqual([
                 { str: "0:0:0", len: 5 },
                 { str: "1", len: 1 },
