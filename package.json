@@ -5,8 +5,10 @@
     "type": "module",
     "main": "./index.js",
     "scripts": {
-        "test": "pnpm vitest",
-        "build": "tsc -p tsconfig.build.json"
+        "test": "vitest",
+        "test:ui:": "vitest --ui",
+        "build": "tsc -p tsconfig.build.json",
+        "ci:test": "vitest run"
     },
     "keywords": [],
     "author": "Asnow",
@@ -16,6 +18,7 @@
         "tslib": "^2.5.3"
     },
     "devDependencies": {
+        "@vitest/ui": "^0.32.4",
         "vitest": "^0.32.0"
     },
     "imports": {

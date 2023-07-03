@@ -31,7 +31,7 @@ describe("AreaRender", function () {
             expect(area.getString(10)).toBe(" ".repeat(20));
         });
     });
-    describe("换行与省略", function () {
+    describe("换行", function () {
         it("英文换行", function () {
             const area = new MockView([10, 10, 5, 5]);
             area.setContext("abcdefg");

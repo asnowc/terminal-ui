@@ -1,5 +1,5 @@
 import type { Terminal } from "./terminal.js";
-import { toEllipsis, createBlockStr } from "./util.js";
+import { toEllipsis, scanLineFromStr } from "./util.js";
 import { Style } from "./ansi_styles.js";
 
 abstract class Node {
@@ -35,89 +35,62 @@ abstract class Node {
 export interface RenderInfo {
     position?: [x: number, y: number];
 }
-export interface StringLine {
-    str: string;
-    len: number;
-}
 
 export abstract class View extends Node {
-    protected abstract root?: Terminal;
-    private context: StringLine[] = [];
+    #context: string = "";
     readonly style = new Style();
-    protected *getRenderLine() {
-        let windowMaxX = this.root?.width ?? Infinity;
-        let windowMaxY = this.root?.height ?? Infinity;
-        let y = 0;
-        let maxY: number;
-        if (this.viewArea[3] > windowMaxY) maxY = windowMaxY - this.y;
-        else maxY = this.viewArea[3] - this.y;
 
-        let width = this.width;
-        if (this.viewArea[2] > windowMaxX) {
-            //todo: 超过窗口范围
-        }
-
-        const content = this.context;
-        if (this.#autoWarp) {
-            let max = maxY < content.length ? maxY - 1 : content.length - 1;
-            while (y < max) {
-                let { str, len } = content[y];
-                yield str + " ".repeat(width - len);
-
-                y++;
-            }
-        }
-        if (y < content.length) {
-            let lastLine = content[y];
-            if (this.#overEllipsis) {
-                let [str, dx] = toEllipsis(lastLine.str, width - lastLine.len);
-                lastLine.str = str;
-                lastLine.len += dx;
-            }
-            yield lastLine.str + " ".repeat(width - lastLine.len);
-            y++;
-        }
-
-        //清空剩余区域
-        let nullStr = " ".repeat(width);
-        for (; y < maxY; y++) {
-            yield nullStr;
-        }
-    }
-    render(ignoreChild?: boolean, renderInfo: RenderInfo = {}) {
+    //todo: 性能优化
+    render(renderInfo: RenderInfo = {}) {
         let stdout = (this as any).root.stdout;
 
-        let [x, y] = this.viewArea;
+        let [x, y, maxX, maxY] = this.viewArea;
+        const width = this.width;
         const encoding = "utf-8";
         const styleCode = this.style.createCode();
         let useStyle = styleCode[0].length;
         if (useStyle) stdout.write(styleCode[0]);
 
-        for (const str of this.getRenderLine()) {
+        const maxLine = this.#autoWarp ? this.height : 1;
+        let lineCount = 0;
+        for (let [start, end, len] of scanLineFromStr(this.#context, width, maxLine)) {
             stdout.cursorTo(x, y);
-            stdout.write(str, encoding);
-
+            let line = this.#context.slice(start, end);
+            lineCount++;
+            if (lineCount === maxLine && this.#overEllipsis) {
+                let res = toEllipsis(line, width - len);
+                line = res[0];
+                len += res[1];
+            }
+            if (len < width) line = line + " ".repeat(width - len);
+            stdout.write(line, encoding);
             y++;
         }
+        let buf = Buffer.alloc(width, " ");
+        for (; y < maxY; y++) {
+            stdout.cursorTo(x, y);
+            stdout.write(buf);
+        }
+
         if (useStyle) stdout.write(styleCode[1]);
-        if (!ignoreChild && this.childCount > 0) this.renderChild(renderInfo);
+        if (this.childCount > 0) this.renderChild(renderInfo);
     }
     #asyncRendering = false;
-    asyncRender(ignoreChild?: boolean) {
+    asyncRender() {
         if (this.#asyncRendering) return;
         let bus = this.root?.renderBus;
         if (bus) {
             this.#asyncRendering = true;
             bus.add(() => {
                 this.#asyncRendering = false;
-                this.render(ignoreChild);
+                this.render();
             });
         }
     }
     protected renderChild(renderInfo: RenderInfo = {}) {
         for (const node of this) {
             //todo 渲染信息处理
-            node.render(false, renderInfo);
+            node.render(renderInfo);
         }
     }
     protected clearArea(area = this.viewArea) {
@@ -131,27 +104,10 @@ export abstract class View extends Node {
         }
     }
     setContext(str: string, notRendering?: boolean) {
-        let res = createBlockStr(str, this.width);
-        if (notRendering) {
-            this.context = res;
-            return;
-        }
-        let oldContent = this.context;
-        let maxCompare = 10;
-        if (res.length === oldContent.length && res.length < maxCompare) {
-            let isEqual = true;
-            for (let i = 0; i < res.length; i++) {
-                if (res[i].str !== this.context[i].str) {
-                    isEqual = false;
-                    break;
-                }
-            }
-            if (isEqual) {
-                this.context = res;
-                return;
-            }
-        }
-        this.context = res;
+        if (str === this.#context) notRendering = true;
+        this.#context = str;
+        if (notRendering) return;
+
         return this.asyncRender();
     }
 
@@ -175,7 +131,7 @@ export abstract class View extends Node {
         val = Boolean(val);
         if (val === this.#autoWarp) return;
         this.#autoWarp = val;
-        if (this.context.length <= 1) return;
+        if (this.#context.length <= 1) return;
 
         this.asyncRender();
     }
@@ -188,11 +144,12 @@ export abstract class View extends Node {
         if (val === this.#overEllipsis) return;
         this.#overEllipsis = val;
 
-        this.asyncRender(val);
+        this.asyncRender();
     }
     #overEllipsis = false;
     #autoWarp = true;
     protected abstract readonly viewArea: Readonly<Area>;
+    protected abstract readonly root?: Terminal;
 }
 
 export interface View {

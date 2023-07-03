@@ -1,58 +1,85 @@
-import { createBlockStr, toEllipsis } from "./util.js";
+import { toEllipsis, scanLineFromStr } from "./util.js";
 import { it, describe, expect } from "vitest";
 
 describe("createBlockStr", function () {
-    describe("单行", function () {
-        it("空字符串,命中优化策略", function () {
-            expect(createBlockStr("", 10)).toEqual([]);
+    function toExcep(str: string, width: number, height: number): [string, number][] {
+        return Array.from(scanLineFromStr(str, width, height)).map(([s, e, len]): [string, number] => {
+            return [str.slice(s, e), len];
         });
+    }
+    describe("单行", function () {
+        it.each([
+            ["", 5, 5],
+            ["abc", 0, 5],
+            ["abc", 5, 0],
+        ])("命中优化策略:[%s, %i, %i]", function (str, width, height) {
+            let arr = toExcep(str, width, height);
+            expect(arr).toEqual([]);
+        });
+
         it("不超过宽度", function () {
             let str = "12中文";
-            let res = createBlockStr(str, 10);
-            expect(res, "应该").toEqual([{ str, len: 6 }]);
+            let arr = toExcep(str, 10, 10);
+            expect(arr).toEqual([[str, 6]]);
+        });
+
+        it("超过一行，限制1行", function () {
+            let str = "abcdefg";
+            let arr = toExcep(str, 5, 1);
+            expect(arr).toEqual([["abcde", 5]]);
         });
     });
     describe("多行", function () {
         it("英文超过", function () {
             let str = "中文中文中a";
-            let res = createBlockStr(str, 10);
+
+            let res = toExcep(str, 10, 10);
             expect(res).toEqual([
-                { str: "中文中文中", len: 10 },
-                { str: "a", len: 1 },
+                ["中文中文中", 10],
+                ["a", 1],
             ]);
         });
         it("中文超1个单位", function () {
             let str = "中文中文a中";
-            let res = createBlockStr(str, 10);
+            let res = toExcep(str, 10, 10);
             expect(res).toEqual([
-                { str: "中文中文a", len: 9 },
-                { str: "中", len: 2 },
+                ["中文中文a", 9],
+                ["中", 2],
             ]);
         });
         it("中文超2个单位", function () {
             let str = "中文中文中文";
-            let res = createBlockStr(str, 10);
+            let res = toExcep(str, 10, 10);
             expect(res).toEqual([
-                { str: "中文中文中", len: 10 },
-                { str: "文", len: 2 },
+                ["中文中文中", 10],
+                ["文", 2],
             ]);
         });
         it("换行符换行", function () {
             let str = "abc\ndef\nq";
-            let res = createBlockStr(str, 10);
+            let res = toExcep(str, 10, 10);
             expect(res).toEqual([
-                { str: "abc", len: 3 },
-                { str: "def", len: 3 },
-                { str: "q", len: 1 },
+                ["abc", 3],
+                ["def", 3],
+                ["q", 1],
             ]);
         });
 
         it("换行符换行2", function () {
             let str = "0:0:0\n1";
-            let res = createBlockStr(str, 20);
+            let res = toExcep(str, 10, 10);
             expect(res).toEqual([
-                { str: "0:0:0", len: 5 },
-                { str: "1", len: 1 },
+                ["0:0:0", 5],
+                ["1", 1],
+            ]);
+        });
+        it("超过3行，限制3行", function () {
+            let str = "abcdefg56000";
+            let arr = toExcep(str, 3, 3);
+            expect(arr).toEqual([
+                ["abc", 3],
+                ["def", 3],
+                ["g56", 3],
             ]);
         });
     });

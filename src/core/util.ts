@@ -1,50 +1,42 @@
-interface StringLine {
-    str: string;
-    len: number;
-}
-
 function getCharLen(charCode: number) {
     if (charCode > 127 || charCode == 94) return 2;
     return 1;
 }
-function getStrLen(str: string) {
-    let len = 0;
-    for (let i = 0; i < str.length; i++) {
+
+export function* scanLineFromStr(
+    str: string,
+    width: number,
+    height: number
+): Generator<[number, number, number], void, void> {
+    if (str === "" || width <= 0 || height <= 0) return;
+
+    let startIndex = 0;
+    let currentWidth = 0;
+    let y = 0;
+    let nextWidth = 0;
+    for (let i = 0; i < str.length && y < height; i++) {
         let charCode = str.charCodeAt(i);
-        if (charCode > 127 || charCode == 94) len += 2;
-        else len++;
-    }
-    return len;
-}
-
-export function createBlockStr(str: string, width: number): StringLine[] {
-    let lines: StringLine[] = [];
-    if (str === "") return lines;
-    else if (str.length === 1) return [{ str, len: getStrLen(str) }];
-
-    let maxX = width;
-    let i = 0; //当前索引
-    let lineStartIndex = 0; //当前行起始索引
-    let line: StringLine = { len: 0, str: str.slice(lineStartIndex, i) };
-
-    for (; i < str.length; i++) {
-        let char = str[i];
-        if (char !== "\n") {
-            let charLen = getCharLen(char.charCodeAt(0));
-
-            if (line.len + charLen <= maxX) {
-                line.str += char;
-                line.len += charLen;
+        if (charCode !== 10) {
+            nextWidth = currentWidth + getCharLen(charCode);
+            if (nextWidth < width) {
+                currentWidth = nextWidth;
                 continue;
-            } else i--;
+            } else if (nextWidth > width) {
+                yield [startIndex, i, currentWidth];
+                startIndex = i;
+                i--;
+            } else {
+                yield [startIndex, i + 1, nextWidth];
+                startIndex = i + 1;
+            }
+        } else {
+            yield [startIndex, i, currentWidth];
+            startIndex = i + 1;
         }
-
-        lines.push(line);
-        lineStartIndex = i;
-        line = { len: 0, str: str.slice(lineStartIndex, i) };
+        currentWidth = 0;
+        y++;
     }
-    if (line.len) lines.push(line);
-    return lines;
+    if (y < height && nextWidth >= 0) yield [startIndex, str.length, nextWidth];
 }
 
 /**

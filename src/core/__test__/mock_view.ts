@@ -1,5 +1,5 @@
 import { AreaBlock } from "../area_block.js";
-import { Area, StringLine, View } from "../view.js";
+import { Area, View } from "../view.js";
 import { MockStdout, MockTerminal } from "./mock_terminal.js";
 export function asyncTime(time?: number) {
     return new Promise((resolve) => setTimeout(resolve, time));

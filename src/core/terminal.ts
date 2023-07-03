@@ -1,4 +1,4 @@
-import { Area, RenderInfo, View } from "./view.js";
+import { Area, View } from "./view.js";
 import { WriteStream } from "node:tty";
 
 export class Terminal extends View {
@@ -18,17 +18,7 @@ export class Terminal extends View {
     destructor() {
         this.stdout.off("resize", this.#onResize);
     }
-    render(ignoreChild?: boolean | undefined, renderInfo?: RenderInfo): void {
-        this.stdout.cursorTo(0, 0);
-        let y = 0;
-        let maxY = this.height;
-        for (const line of this.getRenderLine()) {
-            if (y > maxY) break;
-            this.stdout.write(line);
-            y++;
-        }
-        if (!ignoreChild && this.childCount > 0) this.renderChild(renderInfo);
-    }
+
     #onResize = () => {
         this.asyncRender();
     };
