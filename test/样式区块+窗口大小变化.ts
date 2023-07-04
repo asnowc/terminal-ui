@@ -1,7 +1,6 @@
-import { Terminal, AreaBlock, BgColor, FontColor } from "@asnc/terminal-ui/core.js";
+import { AreaBlock, BgColor, FontColor, terminal } from "@asnc/terminal-ui/core.js";
 import { InputCtrl } from "@asnc/terminal-ui/input_handle.js";
-
-const terminal = Terminal.createDefault();
+terminal.showCursor(false);
 let ctrl = new InputCtrl();
 
 class TitleArea extends AreaBlock {

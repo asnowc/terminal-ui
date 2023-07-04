@@ -39,41 +39,46 @@ export interface RenderInfo {
 export abstract class View extends Node {
     #context: string = "";
     readonly style = new Style();
-
-    //todo: 性能优化
-    render(renderInfo: RenderInfo = {}) {
-        let stdout = (this as any).root.stdout;
-
-        let [x, y, maxX, maxY] = this.viewArea;
-        const width = this.width;
+    *scanLine(width: number, height: number) {
+        const node = this;
+        let y = 0;
         const encoding = "utf-8";
-        const styleCode = this.style.createCode();
-        let useStyle = styleCode[0].length;
-        if (useStyle) stdout.write(styleCode[0]);
 
-        const maxLine = this.#autoWarp ? this.height : 1;
-        let lineCount = 0;
-        for (let [start, end, len] of scanLineFromStr(this.#context, width, maxLine)) {
-            stdout.cursorTo(x, y);
-            let line = this.#context.slice(start, end);
-            lineCount++;
-            if (lineCount === maxLine && this.#overEllipsis) {
+        const maxLine = node.#autoWarp ? height : 1;
+        for (let [start, end, len] of scanLineFromStr(node.#context, width, maxLine)) {
+            let line = node.#context.slice(start, end);
+            if (y + 1 === maxLine && node.#overEllipsis) {
                 let res = toEllipsis(line, width - len);
                 line = res[0];
                 len += res[1];
             }
             if (len < width) line = line + " ".repeat(width - len);
-            stdout.write(line, encoding);
+            yield Buffer.from(line, encoding);
             y++;
         }
         let buf = Buffer.alloc(width, " ");
-        for (; y < maxY; y++) {
-            stdout.cursorTo(x, y);
-            stdout.write(buf);
+        for (; y < height; y++) {
+            yield buf;
         }
+    }
 
+    //todo: 性能优化
+    render(renderInfo: RenderInfo = {}) {
+        const node = this;
+        if (!this.root) return;
+        let stdout = this.root.stdout;
+
+        const styleCode = node.style.createCode();
+        let useStyle = styleCode[0].length;
+        if (useStyle) stdout.write(styleCode[0]);
+
+        let [x, y] = node.viewArea;
+        for (const line of this.scanLine(this.width, this.height)) {
+            stdout.cursorTo(x, y++);
+            stdout.write(line);
+        }
         if (useStyle) stdout.write(styleCode[1]);
-        if (this.childCount > 0) this.renderChild(renderInfo);
+        if (node.childCount > 0) node.renderChild(renderInfo);
     }
     #asyncRendering = false;
     asyncRender() {

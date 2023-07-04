@@ -9,18 +9,19 @@
         "test:ui:": "vitest --ui",
         "build": "tsc -p tsconfig.build.json",
         "type check": "tsc --noEmit",
-        "ci:test": "vitest run"
+        "ci:test": "vitest run",
+        "test:bench": "vitest bench"
     },
     "keywords": [],
     "author": "Asnow",
     "license": "ISC",
     "dependencies": {
-        "@types/node": "^20.3.0",
-        "tslib": "^2.5.3"
+        "@types/node": "^20.3.3",
+        "tslib": "^2.6.0"
     },
     "devDependencies": {
         "@vitest/ui": "^0.32.4",
-        "vitest": "^0.32.0"
+        "vitest": "^0.32.4"
     },
     "imports": {
         "#root/*": "./src/*.js"

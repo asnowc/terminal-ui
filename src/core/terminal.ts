@@ -8,18 +8,25 @@ export class Terminal extends View {
         let size = this.stdout.getWindowSize();
         return [0, 0, size[0], size[1]];
     }
-    readonly renderBus = new RenderBus(1000 / 30);
-    constructor(readonly stdout: WriteStream = process.stderr) {
+    readonly renderBus: RenderBus;
+    get frameRate() {
+        return this.renderBus.time;
+    }
+    set frameRate(val: number) {
+        this.renderBus.time = val;
+    }
+    constructor(readonly stdout: WriteStream = process.stderr, frameRate = 1000 / 3) {
         if (Terminal.instanceList.has(stdout))
             throw new Error("stdout has been instantiated by another Terminal instance");
         Terminal.instanceList.add(stdout);
         super();
+        this.renderBus = new RenderBus(frameRate);
         stdout.on("resize", this.#onResize);
     }
+
     destructor() {
         this.stdout.off("resize", this.#onResize);
     }
-
     #onResize = () => {
         this.asyncRender();
     };
@@ -68,19 +75,7 @@ export class Terminal extends View {
     cursorTo(x: number, y?: number) {
         this.stdout.cursorTo(x, y);
     }
-    /**
-     * @description 使用process.stderr创建terminal, 设置默认RenderBus、清除终端内容、隐藏光标
-     * @param time 异步渲染最短时间间隔, 默认1000/30毫秒 即每秒30帧
-     */
-    static createDefault(time = 1000 / 30) {
-        let terminal = new this();
-        terminal.renderBus.time = time;
-        terminal.showCursor(false);
-        terminal.clearArea();
-        return terminal;
-    }
 }
-
 type Callback = () => void;
 type CallList = Set<Callback>;
 
@@ -131,6 +126,7 @@ export class RenderBus {
     }
 }
 
+export const terminal = new Terminal();
 /** 光标控制码
 \x1b[nA                 光标上移n行
 \x1b[nB                 光标下移n行

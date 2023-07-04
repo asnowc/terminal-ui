@@ -1,22 +1,22 @@
-import { Terminal } from "@asnc/terminal-ui/core.js";
+import { terminal } from "@asnc/terminal-ui/core.js";
+terminal.showCursor(false);
 function createTimeout(timeout: number) {
     return new Promise(function (resolve) {
         setTimeout(resolve, timeout);
     });
 }
-const shellCtrl = Terminal.createDefault();
 const stdout = process.stdout;
 
 async function saveCursor() {
     stdout.write("abc");
-    shellCtrl.moveCursorY(2);
+    terminal.moveCursorY(2);
     stdout.write("向下移动两行");
-    shellCtrl.saveCursor();
+    terminal.saveCursor();
     await createTimeout(1000);
     stdout.cursorTo(0, 0);
     stdout.write("aaaaaa");
     await createTimeout(1000);
-    shellCtrl.resetCursor();
+    terminal.resetCursor();
     stdout.write("bbb");
     await createTimeout(5000);
 }

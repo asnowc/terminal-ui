@@ -1,8 +1,6 @@
-import { AreaBlock, Terminal } from "@asnc/terminal-ui/core.js";
+import { AreaBlock, terminal } from "@asnc/terminal-ui/core.js";
 import { InputCtrl } from "@asnc/terminal-ui/input_handle.js";
-
-const terminal = Terminal.createDefault();
-
+terminal.showCursor(false);
 function createArea(areaSize: ConstructorParameters<typeof AreaBlock>[1]) {
     return new AreaBlock(terminal, areaSize);
 }
