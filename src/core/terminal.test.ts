@@ -110,9 +110,10 @@ describe("Terminal", function () {
         view.appendChild(child2);
         child1.render = vi.fn();
         child2.render = vi.fn();
-        view.mockResizeEvent(60, 20);
+        view.setContext("1"); //父节点跟新，触发子节点渲染
+        child2.setContext("2"); //父节点更新，子节点不会再添加到渲染队列
         await asyncTime(1000 / 15);
-        expect(child1.render).toBeCalled();
-        expect(child2.render).toBeCalled();
+        expect(child1.render).toBeCalledTimes(1);
+        expect(child2.render).toBeCalledTimes(1);
     });
 });

@@ -82,7 +82,7 @@ export class MockTerminal extends Terminal {
     private mockStdout: MockStdout;
     constructor() {
         let mockStdout = new MockStdout();
-        super(mockStdout as any, new RenderBus(1000 / 30));
+        super(mockStdout as any);
         this.mockStdout = mockStdout;
     }
     mockResizeEvent(width: number, height: number) {

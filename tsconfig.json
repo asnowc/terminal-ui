@@ -10,7 +10,7 @@
         "isolatedModules": true,
         "baseUrl": ".",
         "paths": {
-            "#root/*": ["./src/*"],
+            "#rt/*": ["./src/*"],
             "@asnc/terminal-ui/*": ["./src/*"]
         },
         "noEmit": true

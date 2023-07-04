@@ -8,7 +8,8 @@ export class Terminal extends View {
         let size = this.stdout.getWindowSize();
         return [0, 0, size[0], size[1]];
     }
-    constructor(readonly stdout: WriteStream = process.stderr, readonly renderBus?: RenderBus) {
+    readonly renderBus = new RenderBus(1000 / 30);
+    constructor(readonly stdout: WriteStream = process.stderr) {
         if (Terminal.instanceList.has(stdout))
             throw new Error("stdout has been instantiated by another Terminal instance");
         Terminal.instanceList.add(stdout);
@@ -29,6 +30,7 @@ export class Terminal extends View {
         return this.stdout.rows;
     }
     set autoWarp(val: boolean) {
+        this.autoWarp = val;
         return;
     }
     readonly cursorIsShowed = true;
@@ -71,7 +73,8 @@ export class Terminal extends View {
      * @param time 异步渲染最短时间间隔, 默认1000/30毫秒 即每秒30帧
      */
     static createDefault(time = 1000 / 30) {
-        let terminal = new this(undefined, new RenderBus(time));
+        let terminal = new this();
+        terminal.renderBus.time = time;
         terminal.showCursor(false);
         terminal.clearArea();
         return terminal;
@@ -114,6 +117,7 @@ export class RenderBus {
         if (!this.#id) this.#id = setTimeout(this.onTick);
         this.animationRequestList.add(callBack);
     }
+    onError?: (err: any) => boolean;
     private callList(key: "renderList" | "animationRequestList") {
         let list = this[key];
         this[key] = new Set();
@@ -121,8 +125,7 @@ export class RenderBus {
             try {
                 callBack();
             } catch (error) {
-                console.error(error);
-                //todo 异常处理
+                this.onError?.(error);
             }
         }
     }
@@ -133,7 +136,7 @@ export class RenderBus {
 \x1b[nB                 光标下移n行
 \x1b[nC                 光标右移n列
 \x1b[nD                 光标左移n列
-\x1b[y;H                设置光标位置
+\x1b[x;yH               设置光标坐标为[x,y]
 \x1b[2J                 清屏
 \x1b[K                  清除从光标到行尾的内容
 \x1b[s                  保存光标位置

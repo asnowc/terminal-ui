@@ -1,4 +1,3 @@
-import { RenderInfo } from "#root/core/view.js";
 import { Terminal, AreaBlock, BgColor, FontColor } from "@asnc/terminal-ui/core.js";
 import { InputCtrl } from "@asnc/terminal-ui/input_handle.js";
 
@@ -17,7 +16,7 @@ class TitleArea extends AreaBlock {
     set title(val: string) {
         this.setContext(val);
     }
-    render(ignoreChild?: boolean | undefined, renderInfo?: RenderInfo): void {
+    render(): void {
         let i = this.i++;
         this.setContext(i.toString(), true);
 

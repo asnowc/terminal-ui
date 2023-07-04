@@ -4,25 +4,9 @@ function createTimeout(timeout: number) {
         setTimeout(resolve, timeout);
     });
 }
-const shellCtrl = Terminal.createDefault()
+const shellCtrl = Terminal.createDefault();
 const stdout = process.stdout;
-const move = async () => {
-    stdout.write("abc");
-    shellCtrl.moveCursorY(2);
-    stdout.write("向下移动两行");
-    await createTimeout(1000);
-    shellCtrl.moveCursorY(-1);
-    stdout.write("向上移动一行");
-    await createTimeout(1000);
 
-    shellCtrl.moveCursorX(10);
-    stdout.write("向右移动10列");
-    await createTimeout(1000);
-
-    shellCtrl.moveCursorX(-10);
-    stdout.write("向左移动10列");
-    await createTimeout(5000);
-};
 async function saveCursor() {
     stdout.write("abc");
     shellCtrl.moveCursorY(2);
@@ -36,4 +20,7 @@ async function saveCursor() {
     stdout.write("bbb");
     await createTimeout(5000);
 }
-saveCursor();
+async function main() {
+    await saveCursor();
+}
+main();

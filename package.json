@@ -8,6 +8,7 @@
         "test": "vitest",
         "test:ui:": "vitest --ui",
         "build": "tsc -p tsconfig.build.json",
+        "type check": "tsc --noEmit",
         "ci:test": "vitest run"
     },
     "keywords": [],
